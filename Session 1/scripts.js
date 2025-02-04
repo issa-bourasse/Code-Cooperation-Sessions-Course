@@ -1,6 +1,6 @@
 const statusDisplay = document.querySelector('h2');
 const resetButton = document.querySelector('button');
-const gameCells = document.querySelectorAll('.game div[data-cell-index]');
+const gameCells = document.querySelectorAll('.cell');
 
 const winningConditions = [
     [0, 1, 2],
@@ -14,72 +14,98 @@ const winningConditions = [
 ];
 
 let currentPlayer = 'X';
-let gameBoard = Array.from(Array(9).fill(''));
+let gameBoard = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 
-console.log(gameBoard);
+const winAudio = new Audio('audio/win.mp3');
+const clickAudio = new Audio('audio/click.mp3');
 
-if (gameCells.length > 0) {
-    gameCells.forEach(cell => cell.addEventListener('click', cellClick));
-}
+function cellClick(event) {
+    const clickedCell = event.target;
+    const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
 
-function cellClick(event){
-    const cell = event.target;
-    const cellIndex = parseInt(cell.getAttribute('data-cell-index'));
-
-    if(gameBoard[cellIndex] !== '' || !gameActive){
+    if (gameBoard[clickedCellIndex] !== '' || !gameActive) {
         return;
     }
 
-    gameBoard[cellIndex] = currentPlayer;
-    cell.innerHTML = currentPlayer;
+    gameBoard[clickedCellIndex] = currentPlayer;
+    clickedCell.textContent = currentPlayer;
+    clickAudio.play();
 
-    checkWinner();
-}
-
-function checkWinner(){
-    let roundWon = false;
-    for(let i = 0; i < winningConditions.length; i++){
-        const winCondition = winningConditions[i];
-        let a = gameBoard[winCondition[0]];
-        let b = gameBoard[winCondition[1]];
-        let c = gameBoard[winCondition[2]];
-
-        if(a === '' || b === '' || c === ''){
-            continue;
-        }
-
-        if(a === b && b === c){
-            roundWon = true;
-            break;
-        }
-    }
-
-    if(roundWon){
-        statusDisplay.innerHTML = `${currentPlayer} has won!`;
+    if (checkWin()) {
+        statusDisplay.textContent = `${currentPlayer} wins!`;
         gameActive = false;
-        return;
-    }
-
-    let roundDraw = !gameBoard.includes('');
-    if(roundDraw){
-        statusDisplay.innerHTML = 'It\'s a draw!';
+        winAudio.play();
+        triggerConfetti();
+    } else if (gameBoard.every(cell => cell)) {
+        statusDisplay.textContent = "It's a draw! Try again";
         gameActive = false;
-        return;
+    } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        statusDisplay.textContent = `${currentPlayer}'s turn`;
     }
-
-    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-    statusDisplay.innerHTML = `${currentPlayer}'s turn`;
 }
 
-resetButton.addEventListener('click', resetGame);
+function checkWin() {
+    return winningConditions.some(condition => {
+        const [a, b, c] = condition;
+        return gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c];
+    });
+}
 
-function resetGame(){
+function resetGame() {
     currentPlayer = 'X';
-    gameBoard = Array.from(Array(9).fill(''));
+    gameBoard.fill('');
     gameActive = true;
-    statusDisplay.innerHTML = `${currentPlayer}'s turn`;
-    gameCells.forEach(cell => cell.innerHTML = '');
+    statusDisplay.textContent = `${currentPlayer}'s turn`;
+    gameCells.forEach(cell => cell.textContent = '');
 }
 
+function triggerConfetti() {
+    const count = 200;
+    const defaults = {
+        origin: { y: 0.7 },
+        zIndex: 9999
+    };
 
+    function fire(particleRatio, opts) {
+        confetti(
+            Object.assign({}, defaults, opts, {
+                particleCount: Math.floor(count * particleRatio),
+                spread: 360,
+                startVelocity: 30,
+                ticks: 60,
+                gravity: 0.5,
+                colors: ['#ff0000', '#00ff00', '#0000ff']
+            })
+        );
+    }
+
+    fire(0.25, {
+        spread: 26,
+        startVelocity: 55,
+    });
+
+    fire(0.2, {
+        spread: 60,
+    });
+
+    fire(0.35, {
+        spread: 100,
+        decay: 0.91,
+    });
+
+    fire(0.1, {
+        spread: 120,
+        startVelocity: 25,
+        decay: 0.92,
+    });
+
+    fire(0.1, {
+        spread: 120,
+        startVelocity: 45,
+    });
+}
+
+gameCells.forEach(cell => cell.addEventListener('click', cellClick));
+resetButton.addEventListener('click', resetGame);
