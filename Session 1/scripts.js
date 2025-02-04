@@ -17,8 +17,8 @@ let currentPlayer = 'X';
 let gameBoard = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 
-const winAudio = new Audio('audio/win.mp3');
-const clickAudio = new Audio('audio/click.mp3');
+const winAudio = new Audio('win.wav');
+const clickAudio = new Audio('click.mp3');
 
 function cellClick(event) {
     const clickedCell = event.target;
